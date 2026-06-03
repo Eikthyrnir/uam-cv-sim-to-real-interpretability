@@ -145,6 +145,9 @@ dimo_ds_path = '/content/dimo_small'
 
 !pip install torchmetrics
 
+# TIDE: post-hoc detection error decomposition (Cls/Loc/Dupe/Bkg/Miss)
+!pip install tidecv
+
 !pip install effdet timm
 
 !pip install -q transformers
@@ -230,6 +233,47 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 import os
 import time
 
+# ===================== TIDE error analysis (shared by CNN + Transformer paths) =====================
+# TIDE decomposes detection errors into Cls / Loc / Both / Dupe / Bkg / Miss.
+# It is a post-hoc diagnostic: run ONCE on the test set per (model x regime), not every epoch.
+from tidecv import TIDE
+from tidecv.data import Data
+
+def _xyxy_to_xywh(box):
+    "Convert a single xyxy box tensor to COCO [x, y, w, h] (what TIDE expects)."
+    x1, y1, x2, y2 = box.tolist()
+    return [x1, y1, x2 - x1, y2 - y1]
+
+def build_tide_data(all_preds, all_targs, name):
+    """Convert accumulated prediction/target dicts into TIDE Data objects.
+    all_preds: list of {'boxes','scores','labels'} (cpu tensors, xyxy) - one dict per image
+    all_targs: list of {'boxes','labels'}          (cpu tensors, xyxy) - one dict per image
+    Feed ALL detections (no score filtering) so TIDE can attribute background/FP errors.
+    """
+    gt = Data(f"{name}_gt")
+    preds = Data(f"{name}_pred")
+    for img_id, (pred, targ) in enumerate(zip(all_preds, all_targs)):
+        for box, label in zip(targ['boxes'], targ['labels']):
+            gt.add_ground_truth(img_id, int(label), _xyxy_to_xywh(box))
+        for box, label, score in zip(pred['boxes'], pred['labels'], pred['scores']):
+            preds.add_detection(img_id, int(label), float(score), _xyxy_to_xywh(box))
+    return gt, preds
+
+def compute_tide(all_preds, all_targs, name, out_dir=None, pos_threshold=0.5):
+    """Run TIDE error decomposition, print the summary, and (optionally) save the bar plots.
+    Keep pos_threshold fixed (0.5) across all runs so regimes stay comparable.
+    Returns the TIDE object - its run state holds the per-error-type dAP numbers for tables.
+    """
+    gt, preds = build_tide_data(all_preds, all_targs, name)
+    tide = TIDE()
+    tide.evaluate(gt, preds, pos_threshold=pos_threshold, mode=TIDE.BOX)
+    print(f"\n--- TIDE error analysis: {name} ---")
+    tide.summarize()
+    if out_dir is not None:
+        os.makedirs(out_dir, exist_ok=True)
+        tide.plot(out_dir=out_dir)
+    return tide
+
 def train_one_epoch(model, optimizer, data_loader, device, epoch, num_epochs):
     model.train()
     epoch_train_loss = 0
@@ -249,7 +293,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, num_epochs):
 
     return epoch_train_loss / len(data_loader)
 
-def evaluate(model, data_loader, device, desc_prefix="Val"):
+def evaluate(model, data_loader, device, desc_prefix="Val", run_tide=False, tide_name="", tide_out_dir=None):
     # 1. Get validation loss (torchvision models must be in .train() mode to return losses)
     model.train()
     epoch_loss = 0
@@ -266,6 +310,7 @@ def evaluate(model, data_loader, device, desc_prefix="Val"):
     # 2. Get mAP (torchvision models must be in .eval() mode to return predictions)
     model.eval()
     metric = MeanAveragePrecision(box_format='xyxy', class_metrics=True)
+    all_preds, all_targs = [], []  # accumulated across batches for the optional TIDE pass
     with torch.no_grad():
         for images, targets in tqdm(data_loader, desc=f"{desc_prefix} mAP", leave=False):
             images = list(img.to(device) for img in images)
@@ -287,8 +332,13 @@ def evaluate(model, data_loader, device, desc_prefix="Val"):
                 })
 
             metric.update(preds, targs)
+            if run_tide:
+                all_preds.extend(preds)
+                all_targs.extend(targs)
 
     mAP_results = metric.compute()
+    if run_tide:
+        compute_tide(all_preds, all_targs, tide_name, out_dir=tide_out_dir)
     return avg_loss, mAP_results
 
 def run_experiment(model, optimizer, lr_scheduler, train_loader, val_loader, test_loader, run_name, num_epochs=5):
@@ -316,9 +366,12 @@ def run_experiment(model, optimizer, lr_scheduler, train_loader, val_loader, tes
 
         print(f"Epoch [{epoch+1}/{num_epochs}] | Time: {time.time() - start_time:.1f}s | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val mAP: {val_map_res['map'].item():.4f}")
 
-    # Test on independent Test set
+    # Test on independent Test set (+ TIDE error decomposition, once, on the final model)
     print("\n--- Running Independent Test Set Evaluation ---")
-    test_loss, test_map_res = evaluate(model, test_loader, device, desc_prefix="[Test]")
+    test_loss, test_map_res = evaluate(
+        model, test_loader, device, desc_prefix="[Test]",
+        run_tide=True, tide_name=run_name, tide_out_dir=run_dir
+    )
     print(f"Test Loss: {test_loss:.4f}")
     print(f"Test mAP (IoU=0.50:0.95): {test_map_res['map'].item():.4f}")
     print(f"Test mAP@0.50:            {test_map_res['map_50'].item():.4f}")
@@ -364,10 +417,11 @@ def train_hf_transformer_epoch(model, optimizer, data_loader, device, epoch, num
 
     return epoch_train_loss / len(data_loader)
 
-def evaluate_hf_transformer(model, processor, data_loader, device, desc_prefix="Val"):
+def evaluate_hf_transformer(model, processor, data_loader, device, desc_prefix="Val", run_tide=False, tide_name="", tide_out_dir=None):
     model.eval()
     epoch_loss = 0
     metric = MeanAveragePrecision(box_format='xyxy', class_metrics=True)
+    all_preds, all_targs = [], []  # accumulated across batches for the optional TIDE pass
 
     with torch.no_grad():
         for batch in tqdm(data_loader, desc=f"{desc_prefix}", leave=False):
@@ -418,9 +472,14 @@ def evaluate_hf_transformer(model, processor, data_loader, device, desc_prefix="
                 })
 
             metric.update(preds, targs)
+            if run_tide:
+                all_preds.extend(preds)
+                all_targs.extend(targs)
 
     mAP_results = metric.compute()
     avg_loss = epoch_loss / max(1, len(data_loader))
+    if run_tide:
+        compute_tide(all_preds, all_targs, tide_name, out_dir=tide_out_dir)
     return avg_loss, mAP_results
 
 def run_hf_transformer_experiment(model, processor, optimizer, train_loader, val_loader, test_loader, run_name, num_epochs=5, lr_scheduler=None):
@@ -453,7 +512,10 @@ def run_hf_transformer_experiment(model, processor, optimizer, train_loader, val
     # Test on independent Test set
     if test_loader is not None:
         print("\n--- Running Independent Test Set Evaluation ---")
-        test_loss, test_map_res = evaluate_hf_transformer(model, processor, test_loader, device, desc_prefix="[Test]")
+        test_loss, test_map_res = evaluate_hf_transformer(
+            model, processor, test_loader, device, desc_prefix="[Test]",
+            run_tide=True, tide_name=run_name, tide_out_dir=run_dir
+        )
         print(f"Test Loss: {test_loss:.4f}")
         print(f"Test mAP (IoU=0.50:0.95): {test_map_res['map'].item():.4f}")
         print(f"Test mAP@0.50:            {test_map_res['map_50'].item():.4f}")
