@@ -87,8 +87,8 @@ The Drive folder contains:
 * CAM and attention visualizations;
 * qualitative prediction examples;
 * qualitative error examples;
-* model checkpoints;
-* large experiment snapshots;
+* model checkpoints or experiment snapshots, where available;
+* large datasets, full result artifacts, output notebooks and model checkpoints or experiment snapshots;
 * additional artifacts that are too large for GitHub.
 
 This separation is intentional. GitHub contains the code notebooks and project documentation, while Google Drive contains the heavy reproducibility artifacts.
@@ -243,7 +243,8 @@ Only lightweight code notebooks are stored in GitHub. Large PNG figures, full ou
 ## Report
 
 The final project report is included directly in this repository as a PDF file. It describes the motivation, related work, dataset, experimental design, results, qualitative analysis, limitations and reproducibility instructions.
-The report should be used together with the external Google Drive artifact folder, which contains the full result files, large notebooks, figures and model checkpoints.
+
+The report should be read together with the external Google Drive artifact folder, which contains the full result files, large notebooks, figures, experiment snapshots and checkpoints where available.
 
 ## Notes on reproducibility
 
