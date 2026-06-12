@@ -100,8 +100,8 @@ The notebooks were designed to be run in Google Colab or another Jupyter-compati
 ### 1. Clone the repository
 
 ```bash
-git clone [TODO: paste repository URL]
-cd [TODO: repository folder name]
+git clone https://github.com/Eikthyrnir/uam-cv-sim-to-real-interpretability.git
+cd uam-cv-sim-to-real-interpretability
 ```
 
 ### 2. Open the notebooks
