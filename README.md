@@ -76,7 +76,7 @@ All models are evaluated on the same real test set.
 Large files are stored outside GitHub in the Google Drive artifact folder.
 
 **Google Drive artifact folder:**
-`[TODO: paste Google Drive link to CV_Project_DIMO]`
+https://drive.google.com/drive/folders/1EKI4q7UQEtDs2j9fvrbT6Uw4jPJuD17M?usp=sharing 
 
 The Drive folder contains:
 
