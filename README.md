@@ -242,10 +242,6 @@ Only lightweight code notebooks are stored in GitHub. Large PNG figures, full ou
 
 ## Report
 
-The final report describes the motivation, related work, dataset, experimental design, results, qualitative analysis, limitations and reproducibility instructions.
-
-**Final report:**
-
 The final project report is included directly in this repository as a PDF file. It describes the motivation, related work, dataset, experimental design, results, qualitative analysis, limitations and reproducibility instructions.
 The report should be used together with the external Google Drive artifact folder, which contains the full result files, large notebooks, figures and model checkpoints.
 
