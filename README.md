@@ -81,15 +81,15 @@ https://drive.google.com/drive/folders/1EKI4q7UQEtDs2j9fvrbT6Uw4jPJuD17M?usp=sha
 The Drive folder contains:
 
 * prepared DIMO subsets;
-* full Part I results notebook;
+* the full Part I results notebook, which is too large for GitHub;
 * full Part I and Part II result figures;
 * PNG plots used in the report;
 * CAM and attention visualizations;
 * qualitative prediction examples;
 * qualitative error examples;
-* model checkpoints or experiment snapshots, where available;
-* large datasets, full result artifacts, output notebooks and model checkpoints or experiment snapshots;
-* additional artifacts that are too large for GitHub.
+* final model checkpoints stored inside `project_snapshot_20260611_143055.tar`;
+* large experiment snapshots and dataset artifacts;
+* additional files that are too large for GitHub.
 
 This separation is intentional. GitHub contains the code notebooks and project documentation, while Google Drive contains the heavy reproducibility artifacts.
 
