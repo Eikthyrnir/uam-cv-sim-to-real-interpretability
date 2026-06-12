@@ -29,6 +29,7 @@ Current repository structure:
 ```text
 .
 ├── README.md
+├── DIMO_CV_Project_Final_Report_Final.pdf
 ├── DIMO_detection_pipeline.ipynb
 ├── DIMO_detection_sandbox.ipynb
 ├── DIMO_sandbox.ipynb
