@@ -39,13 +39,13 @@ Current repository structure:
 ### File description
 
 * `DIMO_detection_pipeline.ipynb`
-  Main pipeline notebook. Contains the core object detection pipeline and prediction visualizations across different data modes.
+  Main project notebook containing dataset setup, object detection utilities, Part I architecture-baseline code, Part II regime-comparison code, evaluation logic and qualitative prediction/CAM visualization sections.
 
 * `Part 2 of DIMO_detection_pipeline.ipynb`
-  Notebook used for Part II experiments related to training-data regime comparison.
+  Part II notebook focused on training-data regime experiments, result aggregation and regime-level plots for selected models.
 
 * `Part 2.1 of DIMO_detection_pipeline.ipynb`
-  Additional Part II notebook used for qualitative prediction and CAM visualizations.
+  Additional Part II notebook focused on qualitative error examples and prediction/CAM visualizations across data regimes.
 
 * `DIMO_detection_sandbox.ipynb`
   Exploratory notebook used during development on a smaller custom dataset/pipeline.
@@ -53,7 +53,7 @@ Current repository structure:
 * `DIMO_sandbox.ipynb`
   Early exploratory notebook for training and visualization.
 
-The full Part I results notebook is not included in GitHub because of file size limitations. It is available in the external Google Drive artifact folder.
+The full Part I results notebook, `Part 1 results DIMO_detection_pipeline.ipynb`, is not included in GitHub because of file size limitations. It is available in the external Google Drive artifact folder and contains the rendered Part I architecture-baseline results, plots and visualizations.
 
 ## Data
 
