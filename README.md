@@ -223,7 +223,7 @@ This allows us to compare how real data, synthetic data, weak domain randomizati
 
 Full results are available in the Google Drive artifact folder:
 
-`[TODO: paste Google Drive link to CV_Project_DIMO]`
+https://drive.google.com/drive/folders/1EKI4q7UQEtDs2j9fvrbT6Uw4jPJuD17M?usp=sharing 
 
 The result artifacts include:
 
@@ -245,7 +245,9 @@ Only lightweight code notebooks are stored in GitHub. Large PNG figures, full ou
 The final report describes the motivation, related work, dataset, experimental design, results, qualitative analysis, limitations and reproducibility instructions.
 
 **Final report:**
-`[TODO: paste PDF or Google Docs link]`
+
+The final project report is included directly in this repository as a PDF file. It describes the motivation, related work, dataset, experimental design, results, qualitative analysis, limitations and reproducibility instructions.
+The report should be used together with the external Google Drive artifact folder, which contains the full result files, large notebooks, figures and model checkpoints.
 
 ## Notes on reproducibility
 
